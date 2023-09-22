@@ -3,33 +3,37 @@ use anyhow::Result;
 enum Token {
     EoF,          // End of input
 
-    LParen,       // Left parenthesis "("
-    RParen,       // Right parenthesis ")"
-    LSquiggly,    // Left squiggly brace "{"
-    RSquiggly,    // Right squiggly brace "}"
-    LSquare,      // Left square bracket "["
-    RSquare,      // Right square bracket "]"
+    // Parentheses and Brackets
+    LParen,    // Left parenthesis
+    RParen,    // Right parenthesis
+    LSquiggly, // Left brace
+    RSquiggly, // Right brace
+    LSquare,   // Left square bracket
+    RSquare,   // Right square bracket
 
-    Ident(String), // Symbols and identifiers
+    // Literals
+    Integer(i64), // Integer literals
+    Float(f64),   // Floating-point literals
+    String(String),// String literals
+    Symbol(String),// Symbols and Identifiers
+    Keyword(String),// Keywords
 
-    Int(String),   // Integer literals "123"
-    Float(String), // Floating-point literals "123.456"
-    Str(String),   // String literals "Hello world"
-
-    Keyword(String), // Keywords (e.g., :keyword)
+    // Special Characters
     Quote,         // Quote character (')
     Dot,           // Dot (.) for cons cells
-    True,          // Boolean true (t)
-    False,         // Boolean false (nil)
-    Nil,           // Nil, often used for empty lists
-    Comment(String), // Comments
 
-    Char(String),  // Character literals (e.g., #\a, #\newline)
+    // Booleans and Nil
+    True,          // Boolean true
+    False,         // Boolean false
+    Nil,           // Nil (often used for empty lists)
+
+    Comment(String), // Comments
 }
 
+#[allow(unused)]
 pub struct Lexer {
     position: usize,
-    current_char: u8,
+    ch: u8,
     input: Vec<u8>,
 }
 
@@ -37,7 +41,7 @@ impl Lexer {
     pub fn new(input: String) -> Lexer {
         let mut lex = Lexer {
             position: 0,
-            current_char: 0,
+            ch: 0,
             input: input.into_bytes(),
         };
         return lex;
@@ -47,29 +51,62 @@ impl Lexer {
     fn next(&mut self) -> Result<Token> {
         self.skip_whitespace();
         
-        let token = match self.current_char {
+        let token = match self.ch {
+            b'(' => Token::LParen,
+            b')' => Token::RParen,
+            b'{' => Token::LSquiggly,
+            b'}' => Token::RSquiggly,
+            b'[' => Token::LSquare,
+            b']' => Token::RSquare,
+
+            b';' => {
+                let mut comment = String::new();
+                loop {
+                    self.read_char();
+                    if self.peek() == b'\n' {
+                        break;
+                    }
+                    comment.push(str::from_utf8(self.ch));
+                }
+                Token::Comment(comment)
+            }
 
 
 
 
+
+
+            b'a'..=b'z' | b'A'..=b'Z' | b'_' => {}
+            b'0'..=b'9' => {}
+
+            0 => Token::EoF,
         };
-        
     }
+
 
     fn read_char(&mut self) {
         if self.position >= self.input.len() {
-            self.current_char = 0;
+            self.ch = 0;
         } else {
-            self.current_char = self.input[self.position];
+            self.ch = self.input[self.position];
         }
         self.advance();
     }
+    fn read_identifier() {
+        TODO!();
+    }
     fn skip_whitespace(&mut self) {
-        while self.current_char.is_ascii_whitespace() {
-            self.read_char();
+        while self.ch.is_ascii_whitespace() || self.ch == b',' {
+        self.read_char();
         }
     }
     fn advance(&mut self) {self.position += 1;}
-
+    fn peek(&self) -> u8 {
+        if self.position < self.input.len() {
+            return self.input[self.ch];
+        } else {
+            return 0;
+        }
+    }
 
 }
