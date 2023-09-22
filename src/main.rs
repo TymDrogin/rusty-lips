@@ -1,41 +1,40 @@
-use std::io;
+mod lexer;
 
-#[allow(non_snake_case)]
-fn READ(input: String) -> String {
-    input
-}
-#[allow(non_snake_case)]
-fn EVAL(input: String) -> String {
-    input
-}
-#[allow(non_snake_case)]
-fn PRINT(input: String) -> String {
-    input
-}
-fn rep(input: String) -> String {
-    let ast = READ(input);
-    let result = EVAL(ast);
-    let output = PRINT(result);
-    output
-}
+use rustyline::error::ReadlineError;
+use rustyline::{DefaultEditor, Result};
 
-fn main() {
-    loop {
-        let mut input = String::new();
-        print!("user>");
-
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-
-        if input == "EoF" {
-            break;
-        }
-        let result = rep(input);
-        print!("{}", result);
+fn main() -> Result<()> {
+    // `()` can be used when no completer is required
+    let mut rl = DefaultEditor::new()?;
+    #[cfg(feature = "with-file-history")]
+    if rl.load_history("history.txt").is_err() {
+        println!("No previous history.");
     }
+    loop {
+        let readline = rl.readline("rs-lip>> ");
+        match readline {
+            Ok(line) => {
+                rl.add_history_entry(line.as_str());
+                println!("Line: {}", line);
+            },
+            Err(ReadlineError::Interrupted) => {
+                println!("CTRL-C");
+                break
+            },
+            Err(ReadlineError::Eof) => {
+                println!("CTRL-D");
+                break
+            },
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break
+            }
+        }
+    }
+    #[cfg(feature = "with-file-history")]
+    rl.save_history("history.txt");
+    Ok(())
 }
-
 
 
 
