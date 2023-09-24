@@ -1,2 +1,9 @@
-# rusty-lips
-My folow-up of the mal(make a lisp) educational project using rust lang.
+# About This Project
+`Rusty Lips` is a simple interpreter for a ==LISP-like== language. 
+
+```rust
+
+
+```
+
+
