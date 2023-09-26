@@ -1,65 +1,171 @@
-use logos::{Logos, Lexer};
+use std::panic::resume_unwind;
 
-fn to_string(lex: &mut Lexer<Token>) -> Option<String>{
-    Some(lex.slice().to_string())
-}
-
-
-#[derive(Logos, Debug, PartialEq)]
-#[logos(skip r"[\s,]")] // Ignore this regex pattern between tokens
+#[derive(Debug, PartialEq)]
+#[allow(unused)]
 pub enum Token {
-    // Parentheses and Brackets
+    EoF,                // End of file
 
-    #[token("(")]
+    // Parentheses and Brackets
     LParen,             // Left parenthesis
-    #[token(")")]
     RParen,             // Right parenthesis
-    #[token("{")]
     LSquiggly,          // Left brace
-    #[token("}")]
     RSquiggly,          // Right brace
-    #[token("[")]
     LSquare,            // Left square bracket
-    #[token("]")]
     RSquare,            // Right square bracket
 
-    #[regex(r"-?[0-9]*(.[0-9]+)?", to_string)]
-    Number(String),
-    #[regex(r#"(?:[^"\\]|\\.)*"#, to_string)]
+    // Literals
+    Integer(i64),       // Integer literals
+    Float(f64),         // Floating-point literals
     String(String),     // String literals
 
     //Symbols, ident and keyword
-    //FIXME
-    #[token("+", "-", "*", "/"
-    "'", "`", "^", "~@", "~", "@")
-    ]
-    Symbol(String),     // For any special symbol or combinations like +, -, =, >=, ~@, etc
-    #[regex("[a-zA-Z_]*", to_string)]
+    Symbol(String),     // For any special symbol or combinations like +, -, =, >, ~@, etc
     Ident(String),      // Identifiers such as function names
-    //FIXME
-    #[token("defun",to_string)]
     Keyword(String),    // Keywords
 
     // Booleans and Nil
-    #[token("true")]
     True,               // Boolean true
-    #[token("false")]
     False,              // Boolean false
-    #[token("nil")]
     Nil,                // Nil (often used for empty lists)
-    #[regex(";.*", to_string)]
-    Comment(String),    // Comments
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn it_can_recognize_keywords() {
-        let mut lexer = Token::lexer("true false nil defun");
 
-        assert_eq!(lexer.next(), Some(Token::True));
-        assert_eq!(lexer.next(), Some(Token::False));
-        assert_eq!(lexer.next(), Some(Token::Nil));
-        assert_eq!(lexer.next(), Some(Token::Keyword("defun".to_owned())));
+    Comment(String),    // Comments
+    Error(String)
+}
+
+
+struct Lexer {
+    position: usize,
+    input: Vec<u8>
+}
+
+impl Lexer {
+    pub fn new(input: String) -> Self {
+        Self {
+            position: 0,
+            input: input.into_bytes()
+        }
+    }
+
+
+    fn parse_symbol(&mut self, c: u8) -> Token {
+        todo!()
+    }
+    fn parse_ident(&mut self) -> Token {
+        Token::Ident("blah".to_string())
+    }
+    fn parse_number(&mut self) -> Token {
+        todo!()
+    }
+    fn parse_comment(&mut self) -> Token {
+        todo!()
+    }
+    fn parse_error(&mut self) -> Token {
+        todo!()
+    }
+
+    fn peek(&self) -> Option<u8> {
+        if self.position < self.input.len() {
+            Some(self.input[self.position])
+        } else {
+            None
+        }
+    }
+    fn advance(&mut self) {
+        todo!()
+    }
+    fn read_char(&mut self) -> Option<u8> {
+        let char = self.peek();
+        self.advance();
+        char
+    }
+    fn skip_whitespace(&mut self) {
+        while let Some(c) = self.peek()  {
+            if !(c.is_ascii_whitespace() || c == b',') {
+                break;
+            }
+            self.advance();
+        }
+    }
+
+
+}
+
+impl Iterator for Lexer {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.skip_whitespace();
+        let current_char = self.read_char();
+
+        match current_char {
+            Some(c) => {
+                let token = match c {
+                    b'(' => Token::LParen,
+                    b')' => Token::RParen,
+                    b'{' => Token::LSquiggly,
+                    b'}' => Token::RSquiggly,
+                    b'[' => Token::LSquare,
+                    b']' => Token::RSquare,
+
+                    b'+' => Token::Symbol("+".to_string()),
+                    b'-' => Token::Symbol("-".to_string()),
+                    b'*' => Token::Symbol("*".to_string()),
+                    b'/' => Token::Symbol("/".to_string()),
+
+                    b'~' => {
+                        match self.peek() {
+                            Some(b'@') => {self.advance();Token::Symbol("~@".to_string())},
+                            _ => Token::Symbol("~".to_string()),
+                        }
+                    }
+
+                    b'@' => Token::Symbol("@".to_string()),
+                    b'\'' => Token::Symbol("'".to_string()),
+                    b'`' => Token::Symbol("`".to_string()),
+                    b'^' => Token::Symbol("^".to_string()),
+
+                    b'a'..=b'z' | b'A'..=b'Z' | b'_' => self.parse_ident(),
+
+                    b'0'..=b'9' => self.parse_number(),
+
+                    b';' => self.parse_comment(),
+
+                    _ => Token::Error(c.to_string()),
+
+                };
+                Some(token)
+            },
+            None => None
+        }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
