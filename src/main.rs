@@ -3,7 +3,7 @@ use crate::lexer::Lexer;
 mod lexer;
 
 fn main() {
-    let input = "(  123   456 789   )";
+    let input = "(  + 2   (*  3  4)  nil abc true)";
 
     let my_lexer = Lexer::new(input.to_string());
 

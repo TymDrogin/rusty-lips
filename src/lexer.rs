@@ -67,7 +67,6 @@ impl Lexer {
     fn parse_number(&mut self, c: u8) -> Token {
         let mut number = String::new();
         number.push(c as char);
-
         while let Some(c) = self.peek() {
             if c.is_ascii_digit() {
                 number.push(c as char);
@@ -123,10 +122,10 @@ impl Lexer {
     }
     fn skip_whitespace(&mut self) {
         while let Some(c) = self.peek() {
-            if !(c.is_ascii_whitespace() || c == b',') {
-                break;
-            } else {
+            if c.is_ascii_whitespace() || c == b',' {
                 self.advance();
+            } else {
+                break;
             }
         }
     }
@@ -138,7 +137,6 @@ impl Iterator for Lexer {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespace();
-
         let tok = match self.read_char() {
             Some(c) => {
                 let token = match c {
@@ -176,7 +174,6 @@ impl Iterator for Lexer {
 
                     _ => Token::Error(c.to_string())
                 };
-                self.advance();
                 Some(token)
             }
             None => None
