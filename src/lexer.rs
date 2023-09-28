@@ -1,10 +1,9 @@
-
+use std::fmt::Display;
 #[derive(Debug, PartialEq)]
 #[allow(unused)]
 pub enum Token {
     EoF,                // End of file
 
-    // Parentheses and Brackets
     LParen,             // Left parenthesis
     RParen,             // Right parenthesis
     LSquiggly,          // Left brace
@@ -12,8 +11,7 @@ pub enum Token {
     LSquare,            // Left square bracket
     RSquare,            // Right square bracket
 
-    // Literals
-    Number(String),     // Number stored as string
+    Number(f64),        // Numbers as double only
     String(String),     // String literals
 
     //Symbols, ident and keyword
@@ -30,6 +28,36 @@ pub enum Token {
     Error(String)
 }
 
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        return match self {
+            Token::EoF => write!(f, "Eof"),
+
+            Token::LParen => write!(f, "Lparen"),
+            Token::RParen => write!(f, "Rparen"),
+            Token::LSquiggly => write!(f, "LSquirly"),
+            Token::RSquiggly => write!(f, "RSquirly"),
+            Token::LSquare => write!(f, "LSquare"),
+            Token::RSquare => write!(f, "RSquare"),
+
+            Token::Number(x) => write!(f, "Number({})", x),
+            Token::String(x) => write!(f, "String({})", x),
+
+            Token::Symbol(x) => write!(f, "Symbol({})", x),
+            Token::Ident(x) => write!(f, "Ident({})", x),
+            Token::Keyword(x) => write!(f, "Keyword({})", x),
+
+            Token::True => write!(f, "True"),
+            Token::False => write!(f, "False"),
+            Token::Nil  => write!(f, "Nil"),
+
+            Token::Comment(x) => write!(f, "Comment({})", x),
+            Token::Error(x) => write!(f, "Error({})", x),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Lexer {
     position: usize,
@@ -44,7 +72,6 @@ impl Lexer {
             input: input.into_bytes()
         }
     }
-
 
     fn parse_ident(&mut self, c: u8) -> Token {
         let mut ident = String::new();
@@ -67,6 +94,7 @@ impl Lexer {
     fn parse_number(&mut self, c: u8) -> Token {
         let mut number = String::new();
         number.push(c as char);
+
         while let Some(c) = self.peek() {
             if c.is_ascii_digit() {
                 number.push(c as char);
@@ -89,7 +117,12 @@ impl Lexer {
                 break; // Exit the loop if a non-digit and non-period character is encountered
             }
         }
-        Token::Number(number)
+
+        if let Ok(parsed_number) = number.parse::<f64>() {
+            Token::Number(parsed_number)
+        } else {
+            Token::Error(format!("Unable to parse number: {}", number))
+        }
     }
 
     fn parse_comment(&mut self) -> Token {
@@ -105,6 +138,7 @@ impl Lexer {
         Token::Comment(comment)
     }
 
+    // Returns current char if it exists
     fn peek(&self) -> Option<u8> {
         if self.position < self.input.len() {
             Some(self.input[self.position])
@@ -129,7 +163,6 @@ impl Lexer {
             }
         }
     }
-
 }
 
 impl Iterator for Lexer {
